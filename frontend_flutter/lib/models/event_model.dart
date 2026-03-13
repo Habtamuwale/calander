@@ -1,0 +1,60 @@
+import 'package:flutter/material.dart';
+
+class ScheduledEvent {
+  final String id;
+  final String subject;
+  final DateTime startTime;
+  final DateTime endTime;
+  final String location;
+  final String? recurrenceRule;
+  final Color color;
+  final bool hasReminder;
+  final int? reminderMinutesBefore;
+  final String description;
+  final String timezone; // New Field
+
+  ScheduledEvent({
+    required this.id,
+    required this.subject,
+    required this.startTime,
+    required this.endTime,
+    this.location = '',
+    this.description = '',
+    this.recurrenceRule,
+    this.color = Colors.indigo,
+    this.hasReminder = false,
+    this.reminderMinutesBefore = 15,
+    this.timezone = 'UTC', // Default to UTC
+  });
+
+  factory ScheduledEvent.fromJson(Map<String, dynamic> json) {
+    return ScheduledEvent(
+      id: json['id'] ?? '',
+      subject: json['Subject'] ?? json['subject'] ?? 'No Title',
+      startTime: DateTime.parse(json['StartTime'] ?? json['startTime']),
+      endTime: DateTime.parse(json['EndTime'] ?? json['endTime']),
+      location: json['Location'] ?? json['location'] ?? '',
+      description: json['Description'] ?? json['description'] ?? '',
+      recurrenceRule: json['RecurrenceRule'] ?? json['recurrenceRule'],
+      color: json['Color'] != null ? Color(int.parse(json['Color'])) : Colors.indigo,
+      hasReminder: json['hasReminder'] ?? false,
+      reminderMinutesBefore: json['reminderMinutesBefore'],
+      timezone: json['timezone'] ?? 'UTC',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'Subject': subject,
+      'StartTime': startTime.toIso8601String(),
+      'EndTime': endTime.toIso8601String(),
+      'Location': location,
+      'Description': description,
+      'RecurrenceRule': recurrenceRule,
+      'Color': color.value.toString(),
+      'hasReminder': hasReminder,
+      'reminderMinutesBefore': reminderMinutesBefore,
+      'timezone': timezone,
+    };
+  }
+}
