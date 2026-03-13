@@ -12,8 +12,13 @@ class AuthService extends ChangeNotifier {
   bool _isOtpVerified = false;
   String? _lastOtpEmail;
 
+  /// Whether the user has successfully verified the OTP after authentication.
   bool get isOtpVerified => _isOtpVerified;
+  
+  /// The email address for which the last OTP was requested.
   String? get lastOtpEmail => _lastOtpEmail;
+
+  /// Updates the OTP verification state and notifies listeners for UI updates.
   void setOtpVerified(bool value) {
     if (_isOtpVerified == value) return;
     _isOtpVerified = value;
@@ -22,14 +27,15 @@ class AuthService extends ChangeNotifier {
 
   Stream<User?> get user => _auth.authStateChanges();
 
+  /// Registers a new user with Firebase and triggers a background OTP request.
   Future<UserCredential?> signUp(String email, String password) async {
     try {
       final cred = await _auth.createUserWithEmailAndPassword(
         email: email, 
         password: password
       );
-      // We don't await the OTP request here to allow immediate UI transition.
-      // The secondary trigger in OtpVerificationScreen.initState will catch it.
+      // Trigger background OTP request so the user finds it in their inbox 
+      // by the time they reach the verification screen.
       requestOTP(email).catchError((e) {
         print("Background OTP Error: $e");
         return "";
@@ -41,13 +47,14 @@ class AuthService extends ChangeNotifier {
     }
   }
 
+  /// Logs in an existing user and triggers a 2FA-like OTP request.
   Future<UserCredential?> signIn(String email, String password) async {
     try {
       final cred = await _auth.signInWithEmailAndPassword(
         email: email, 
         password: password
       );
-      // Trigger OTP request in background and return immediately
+      // Trigger background OTP to verify the device/session.
       requestOTP(email).catchError((e) {
         print("Background OTP Error: $e");
         return "";

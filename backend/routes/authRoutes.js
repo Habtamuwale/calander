@@ -5,19 +5,21 @@ const authService = require('../services/authService');
 const { sendPasswordResetEmail, sendOTPEmail } = require('../services/emailService');
 const { generateOTP, saveOTP, verifyOTP } = require('../services/otpService');
 
+// Request a Firebase password reset link and send via backend email service
 router.post('/forgot-password', async (req, res) => {
     const { email } = req.body;
     if (!email) {
         return res.status(400).json({ error: 'Email is required' });
     }
 
+    // Ensure email is valid before hitting Firebase
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
         return res.status(400).json({ error: 'Invalid email format' });
     }
 
     try {
-        // Verify user exists in Firebase first to prevent generatePasswordResetLink from throwing
+        // Step 1: Verify if user exists (prevents generation of orphan links)
         try {
             await auth.getUserByEmail(email);
         } catch (error) {
@@ -69,10 +71,11 @@ router.post('/request-otp', async (req, res) => {
         const otp = generateOTP();
         console.log(`[OTP Request] Generated OTP for ${email}`);
         
+        // Step 2: Store OTP in Firestore with 10-minute expiration
         await saveOTP(email, otp);
         console.log(`[OTP Request] Saved OTP to Firestore for ${email}`);
 
-        // Await the email sending to ensure we only report success if it actually worked
+        // Step 3: Send HTML email via Nodemailer
         try {
             await sendOTPEmail(email, otp);
             console.log(`[OTP Request] Email sent successfully to ${email}`);
