@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'signup_screen.dart';
 import 'dashboard_screen.dart';
+import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -23,14 +24,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       await _auth.signIn(_emailController.text, _passwordController.text);
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => DashboardScreen()),
-      );
+      // On success, we don't reset _isLoading to avoid flickering the form 
+      // before the StreamBuilder switches to the OTP screen.
     } catch (e) {
-      setState(() => _error = e.toString());
-    } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -76,7 +78,17 @@ class _LoginScreenState extends State<LoginScreen> {
                   decoration: InputDecoration(labelText: 'Password'),
                   obscureText: true,
                 ),
-                SizedBox(height: 32),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => Navigator.push(
+                      context, 
+                      MaterialPageRoute(builder: (context) => ForgotPasswordScreen())
+                    ),
+                    child: Text("Forgot Password?", style: TextStyle(color: Colors.indigo)),
+                  ),
+                ),
+                SizedBox(height: 16),
                 _isLoading
                     ? CircularProgressIndicator()
                     : ElevatedButton(
@@ -88,18 +100,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         onPressed: _login,
                         child: Text("Login"),
                       ),
-                SizedBox(height: 12),
-                OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: Size(double.infinity, 48),
-                    side: BorderSide(color: Colors.indigo),
-                  ),
-                  onPressed: () => Navigator.pushReplacement(
-                    context, 
-                    MaterialPageRoute(builder: (context) => DashboardScreen())
-                  ),
-                  child: Text("Try Demo Mode (Bypass Auth)", style: TextStyle(color: Colors.indigo)),
-                ),
+
+
                 TextButton(
                   onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => SignupScreen())),
                   child: Text("Need an account? Sign Up"),

@@ -57,4 +57,17 @@ class ScheduledEvent {
       'timezone': timezone,
     };
   }
+  IconData get icon {
+    final s = subject.toLowerCase();
+    if (s.contains('gym') || s.contains('workout') || s.contains('exercise')) return Icons.fitness_center;
+    if (s.contains('coffee') || s.contains('drink') || s.contains('tea')) return Icons.coffee;
+    if (s.contains('meet') || s.contains('call') || s.contains('zoom')) return Icons.video_call;
+    if (s.contains('doctor') || s.contains('hospital') || s.contains('med')) return Icons.medical_services;
+    if (s.contains('eat') || s.contains('dinner') || s.contains('lunch') || s.contains('food')) return Icons.restaurant;
+    if (s.contains('flight') || s.contains('travel') || s.contains('trip')) return Icons.flight;
+    if (s.contains('study') || s.contains('class') || s.contains('learn')) return Icons.school;
+    if (s.contains('shopping') || s.contains('buy') || s.contains('market')) return Icons.shopping_cart;
+    if (s.contains('money') || s.contains('bank') || s.contains('pay')) return Icons.payments;
+    return Icons.event;
+  }
 }

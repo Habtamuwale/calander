@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const eventRoutes = require('./routes/eventRoutes');
+const authRoutes = require('./routes/authRoutes');
 const { startReminderScheduler } = require('./services/scheduler');
 
 const app = express();
@@ -21,6 +22,7 @@ app.use((req, res, next) => {
 app.get('/', (req, res) => res.send('Event Scheduler API is running.'));
 app.get('/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
 
+app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
 
 const PORT = process.env.PORT || 5000;

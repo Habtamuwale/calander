@@ -28,14 +28,14 @@ class _SignupScreenState extends State<SignupScreen> {
 
     try {
       await _auth.signUp(_emailController.text, _passwordController.text);
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => DashboardScreen()),
-      );
+      Navigator.of(context).popUntil((route) => route.isFirst);
     } catch (e) {
-      setState(() => _error = e.toString());
-    } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+      }
     }
   }
 

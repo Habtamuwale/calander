@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'screens/login_screen.dart';
 import 'screens/dashboard_screen.dart';
+import 'screens/otp_verification_screen.dart';
 import 'services/auth_service.dart';
 import 'firebase_options.dart'; // Import the generated config
 import 'package:timezone/data/latest.dart' as tz;
+import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   tz.initializeTimeZones();
+  await NotificationService().initialize();
   
   bool isFirebaseInitialized = false;
   String initError = "";
@@ -53,19 +57,29 @@ class MyApp extends StatelessWidget {
       ),
       home: !isInitialized 
         ? InitializationErrorPage(error: initError)
-        : StreamBuilder(
-            stream: _auth.user,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.active) {
+        : ListenableBuilder(
+            listenable: _auth,
+            builder: (context, _) => StreamBuilder<User?>(
+              stream: _auth.user,
+              builder: (context, snapshot) {
+                // Determine the correct screen based on auth state
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return LoadingPage();
+                }
+
                 final user = snapshot.data;
                 if (user == null) {
+                  // Not logged in -> Show Login
                   return LoginScreen();
-                } else {
+                } else if (_auth.isOtpVerified) {
+                  // Logged in AND OTP Verified -> Show Dashboard
                   return DashboardScreen();
+                } else {
+                  // Logged in but NOT OTP Verified -> Show OTP Screen
+                  return OtpVerificationScreen(email: user.email ?? '');
                 }
-              }
-              return LoadingPage();
-            },
+              },
+            ),
           ),
     );
   }

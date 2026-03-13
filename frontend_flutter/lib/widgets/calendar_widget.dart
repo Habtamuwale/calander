@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../services/api_service.dart';
 import '../models/event_model.dart';
 import '../services/google_calendar_service.dart';
+import '../services/notification_service.dart';
 
 class CalendarWidget extends StatefulWidget {
   final Function? onEventUpdated;
@@ -26,16 +27,19 @@ class CalendarWidgetState extends State<CalendarWidget> {
   }
 
   Future<void> _loadEvents() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
     try {
       final events = await _api.getEvents();
-      setState(() => _events = events);
+      if (mounted) setState(() => _events = events);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error loading events: $e")),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error loading events: $e")),
+        );
+      }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -376,6 +380,21 @@ class CalendarWidgetState extends State<CalendarWidget> {
                             } else {
                               await _api.updateEvent(updatedEvent);
                             }
+
+                            // Schedule Notification if reminder is set
+                            if (updatedEvent.hasReminder) {
+                              final DateTime reminderTime = updatedEvent.startTime.subtract(
+                                Duration(minutes: updatedEvent.reminderMinutesBefore ?? 15),
+                              );
+                              if (reminderTime.isAfter(DateTime.now())) {
+                                await NotificationService().scheduleReminder(
+                                  updatedEvent.subject,
+                                  reminderTime,
+                                  body: "Starting soon at ${DateFormat('h:mm a').format(updatedEvent.startTime)}",
+                                );
+                              }
+                            }
+
                             Navigator.pop(context);
                             await _loadEvents();
                             if (widget.onEventUpdated != null) widget.onEventUpdated!();

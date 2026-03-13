@@ -66,9 +66,9 @@ class _EventListWidgetState extends State<EventListWidget> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
-            Container(width: 12, height: 12, decoration: BoxDecoration(color: event.color, shape: BoxShape.circle)),
-            const SizedBox(width: 10),
-            Expanded(child: Text(event.subject, style: const TextStyle(fontWeight: FontWeight.bold))),
+            Icon(event.icon, color: event.color, size: 28),
+            const SizedBox(width: 12),
+            Expanded(child: Text(event.subject, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 22))),
           ],
         ),
         content: Column(
@@ -172,7 +172,17 @@ class _EventListWidgetState extends State<EventListWidget> {
                         onTap: () => _showDetailDialog(event),
                         child: Row(
                           children: [
-                            Container(width: 6, color: event.color),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 12),
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: event.color.withOpacity(0.15),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(event.icon, color: event.color, size: 24),
+                              ),
+                            ),
                             Expanded(
                               child: Padding(
                                 padding: const EdgeInsets.all(12),
