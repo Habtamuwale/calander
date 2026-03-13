@@ -46,6 +46,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '240961413878',
     projectId: 'schedule-228e7',
     authDomain: 'schedule-228e7.firebaseapp.com',
+    databaseURL: 'https://schedule-228e7-default-rtdb.firebaseio.com',
     storageBucket: 'schedule-228e7.firebasestorage.app',
     measurementId: 'G-F17D19HBMH',
   );
@@ -55,6 +56,7 @@ class DefaultFirebaseOptions {
     appId: '1:240961413878:android:aa2df8e7ec3200e5ed42d7',
     messagingSenderId: '240961413878',
     projectId: 'schedule-228e7',
+    databaseURL: 'https://schedule-228e7-default-rtdb.firebaseio.com',
     storageBucket: 'schedule-228e7.firebasestorage.app',
   );
 
@@ -63,6 +65,7 @@ class DefaultFirebaseOptions {
     appId: '1:240961413878:ios:bd9d6eea427ff06fed42d7',
     messagingSenderId: '240961413878',
     projectId: 'schedule-228e7',
+    databaseURL: 'https://schedule-228e7-default-rtdb.firebaseio.com',
     storageBucket: 'schedule-228e7.firebasestorage.app',
     iosBundleId: 'com.example.frontendFlutter',
   );
@@ -72,6 +75,7 @@ class DefaultFirebaseOptions {
     appId: '1:240961413878:ios:bd9d6eea427ff06fed42d7',
     messagingSenderId: '240961413878',
     projectId: 'schedule-228e7',
+    databaseURL: 'https://schedule-228e7-default-rtdb.firebaseio.com',
     storageBucket: 'schedule-228e7.firebasestorage.app',
     iosBundleId: 'com.example.frontendFlutter',
   );
@@ -82,7 +86,9 @@ class DefaultFirebaseOptions {
     messagingSenderId: '240961413878',
     projectId: 'schedule-228e7',
     authDomain: 'schedule-228e7.firebaseapp.com',
+    databaseURL: 'https://schedule-228e7-default-rtdb.firebaseio.com',
     storageBucket: 'schedule-228e7.firebasestorage.app',
     measurementId: 'G-GDQG1JN1B9',
   );
+
 }

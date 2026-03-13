@@ -7,7 +7,6 @@ const startReminderScheduler = () => {
     cron.schedule('* * * * *', async () => {
         console.log('Running reminder check...');
         const now = new Date();
-        const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
 
         try {
             // Find events with hasReminder: true
@@ -18,22 +17,38 @@ const startReminderScheduler = () => {
             const events = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
             for (const event of events) {
-                const startTime = new Date(event.StartTime);
+                // Guard: skip events without a userId
+                if (!event.userId) {
+                    console.warn(`Event ${event.id} is missing userId, skipping.`);
+                    continue;
+                }
+
+                // Support both capitalized Firestore keys (StartTime) and lowercase (startTime)
+                const rawStartTime = event.StartTime || event.startTime;
+                if (!rawStartTime) {
+                    console.warn(`Event ${event.id} is missing StartTime, skipping.`);
+                    continue;
+                }
+
+                const startTime = new Date(rawStartTime);
                 const reminderTime = new Date(startTime.getTime() - (event.reminderMinutesBefore || 15) * 60 * 1000);
 
                 // Check if it's time to send the reminder
-                // For simplicity: if current time is within 1 minute of reminder time and not sent yet
                 if (now >= reminderTime && now < startTime && !event.reminderSent) {
                     try {
                         const user = await auth.getUser(event.userId);
                         if (user && user.email) {
+                            const eventTitle = event.Subject || event.subject || 'Your Event';
+                            console.log(`Sending reminder to ${user.email} for event: "${eventTitle}"`);
                             await sendReminderEmail(user.email, event);
 
                             // Mark as sent to prevent duplicate emails
                             await db.collection('events').doc(event.id).update({ reminderSent: true });
+                        } else {
+                            console.warn(`No email found for userId: ${event.userId}`);
                         }
                     } catch (err) {
-                        console.error(`Error processing reminder for event ${event.id}:`, err);
+                        console.error(`Error processing reminder for event ${event.id}:`, err.message);
                     }
                 }
             }

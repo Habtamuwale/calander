@@ -14,13 +14,58 @@ class _SignupScreenState extends State<SignupScreen> {
   final _auth = AuthService();
   bool _isLoading = false;
   String _error = '';
+  String? _emailError;
+  String? _passwordError;
+  String? _confirmError;
+  bool _obscurePassword = true;
+  bool _obscureConfirm = true;
 
-  void _signup() async {
-    if (_passwordController.text != _confirmController.text) {
-      setState(() => _error = "Passwords do not match");
-      return;
+  bool _validateForm() {
+    bool valid = true;
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    final confirm = _confirmController.text;
+    final emailRegex = RegExp(r'^[\w.-]+@[\w.-]+\.[a-zA-Z]{2,}$');
+
+    if (email.isEmpty) {
+      _emailError = 'Email is required.';
+      valid = false;
+    } else if (!emailRegex.hasMatch(email)) {
+      _emailError = 'Enter a valid email address.';
+      valid = false;
+    } else {
+      _emailError = null;
     }
 
+    if (password.isEmpty) {
+      _passwordError = 'Password is required.';
+      valid = false;
+    } else if (password.length < 6) {
+      _passwordError = 'Password must be at least 6 characters.';
+      valid = false;
+    } else if (!RegExp(r'[A-Za-z]').hasMatch(password) || !RegExp(r'[0-9]').hasMatch(password)) {
+      _passwordError = 'Password must contain letters and numbers.';
+      valid = false;
+    } else {
+      _passwordError = null;
+    }
+
+    if (confirm.isEmpty) {
+      _confirmError = 'Please confirm your password.';
+      valid = false;
+    } else if (confirm != password) {
+      _confirmError = 'Passwords do not match.';
+      valid = false;
+    } else {
+      _confirmError = null;
+    }
+
+    setState(() {});
+    return valid;
+  }
+
+  void _signup() async {
+    if (!_validateForm()) return;
     setState(() {
       _isLoading = true;
       _error = '';
@@ -74,17 +119,46 @@ class _SignupScreenState extends State<SignupScreen> {
                   ),
                 TextField(
                   controller: _emailController,
-                  decoration: InputDecoration(labelText: 'Email'),
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: InputDecoration(
+                    labelText: 'Email',
+                    prefixIcon: const Icon(Icons.email_outlined),
+                    border: const OutlineInputBorder(),
+                    errorText: _emailError,
+                  ),
+                  onChanged: (_) { if (_emailError != null) setState(() => _emailError = null); },
                 ),
+                const SizedBox(height: 12),
                 TextField(
                   controller: _passwordController,
-                  decoration: InputDecoration(labelText: 'Password'),
-                  obscureText: true,
+                  obscureText: _obscurePassword,
+                  decoration: InputDecoration(
+                    labelText: 'Password',
+                    prefixIcon: const Icon(Icons.lock_outline),
+                    border: const OutlineInputBorder(),
+                    errorText: _passwordError,
+                    suffixIcon: IconButton(
+                      icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
+                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                    ),
+                  ),
+                  onChanged: (_) { if (_passwordError != null) setState(() => _passwordError = null); },
                 ),
+                const SizedBox(height: 12),
                 TextField(
                   controller: _confirmController,
-                  decoration: InputDecoration(labelText: 'Confirm Password'),
-                  obscureText: true,
+                  obscureText: _obscureConfirm,
+                  decoration: InputDecoration(
+                    labelText: 'Confirm Password',
+                    prefixIcon: const Icon(Icons.lock_outline),
+                    border: const OutlineInputBorder(),
+                    errorText: _confirmError,
+                    suffixIcon: IconButton(
+                      icon: Icon(_obscureConfirm ? Icons.visibility_off : Icons.visibility),
+                      onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
+                    ),
+                  ),
+                  onChanged: (_) { if (_confirmError != null) setState(() => _confirmError = null); },
                 ),
                 SizedBox(height: 32),
                 _isLoading

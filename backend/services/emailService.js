@@ -9,16 +9,36 @@ const transporter = nodemailer.createTransport({
 });
 
 const sendReminderEmail = async (userEmail, event) => {
+    // Support both capitalized Firestore keys (Subject, StartTime) and lowercase keys
+    const subject = event.Subject || event.subject || 'Your Event';
+    const location = event.Location || event.location || 'N/A';
+    const rawStartTime = event.StartTime || event.startTime;
+    const startTime = rawStartTime 
+        ? new Date(rawStartTime).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })
+        : 'Unknown time';
+
     const mailOptions = {
         from: process.env.EMAIL_USER,
         to: userEmail,
-        subject: `Reminder: ${event.subject}`,
-        text: `Your event "${event.subject}" is starting soon at ${event.startTime}.\nLocation: ${event.location || 'N/A'}`,
+        subject: `Reminder: ${subject}`,
+        html: `
+            <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #3f51b5; border-radius: 10px;">
+                <h2 style="color: #3f51b5;">⏰ Event Reminder</h2>
+                <p>Your event is starting soon!</p>
+                <table style="border-collapse: collapse; width: 100%;">
+                    <tr><td style="padding: 8px; font-weight: bold;">Event:</td><td style="padding: 8px;">${subject}</td></tr>
+                    <tr><td style="padding: 8px; font-weight: bold;">Time:</td><td style="padding: 8px;">${startTime}</td></tr>
+                    <tr><td style="padding: 8px; font-weight: bold;">Location:</td><td style="padding: 8px;">${location}</td></tr>
+                </table>
+                <hr>
+                <p style="font-size: 12px; color: #777;">Vibrant Scheduler Team</p>
+            </div>
+        `,
     };
 
     try {
         await transporter.sendMail(mailOptions);
-        console.log(`Reminder email sent to ${userEmail}`);
+        console.log(`Reminder email sent to ${userEmail} for event: ${subject}`);
     } catch (error) {
         console.error('Error sending email:', error);
     }

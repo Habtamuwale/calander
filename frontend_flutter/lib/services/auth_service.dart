@@ -30,7 +30,10 @@ class AuthService extends ChangeNotifier {
       );
       // We don't await the OTP request here to allow immediate UI transition.
       // The secondary trigger in OtpVerificationScreen.initState will catch it.
-      requestOTP(email).catchError((e) => print("Background OTP Error: $e"));
+      requestOTP(email).catchError((e) {
+        print("Background OTP Error: $e");
+        return "";
+      });
       return cred;
     } catch (e) {
       print("Signup Error: $e");
@@ -45,7 +48,10 @@ class AuthService extends ChangeNotifier {
         password: password
       );
       // Trigger OTP request in background and return immediately
-      requestOTP(email).catchError((e) => print("Background OTP Error: $e"));
+      requestOTP(email).catchError((e) {
+        print("Background OTP Error: $e");
+        return "";
+      });
       return cred;
     } catch (e) {
       print("Signin Error: $e");
@@ -121,4 +127,63 @@ class AuthService extends ChangeNotifier {
     if (response.statusCode == 200) return data['message'];
     throw data['error'] ?? 'Reset failed';
   }
+
+  // --- Profile Management ---
+
+  User? get currentUser => _auth.currentUser;
+
+  Future<void> updateDisplayName(String name) async {
+    final token = await getToken();
+    if (token == null) throw 'Not authenticated';
+
+    // 1. Update local Firebase Auth record
+    await _auth.currentUser?.updateDisplayName(name);
+    
+    // 2. Call backend to update Firestore and central Auth record
+    final response = await http.post(
+      Uri.parse('http://localhost:5000/api/auth/update-profile'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({'displayName': name}),
+    );
+
+    if (response.statusCode != 200) {
+      final data = jsonDecode(response.body);
+      throw data['error'] ?? 'Failed to sync profile update';
+    }
+
+    await _auth.currentUser?.reload();
+    notifyListeners();
+  }
+
+  Future<void> updateEmail(String newEmail, String currentPassword) async {
+    final user = _auth.currentUser;
+    if (user == null) throw 'No user logged in';
+    // Re-authenticate before sensitive operation
+    final cred = EmailAuthProvider.credential(email: user.email!, password: currentPassword);
+    await user.reauthenticateWithCredential(cred);
+    await user.verifyBeforeUpdateEmail(newEmail);
+    notifyListeners();
+  }
+
+  Future<void> updatePassword(String currentPassword, String newPassword) async {
+    final user = _auth.currentUser;
+    if (user == null) throw 'No user logged in';
+    // Re-authenticate before sensitive operation
+    final cred = EmailAuthProvider.credential(email: user.email!, password: currentPassword);
+    await user.reauthenticateWithCredential(cred);
+    await user.updatePassword(newPassword);
+  }
+
+  Future<void> deleteAccount(String currentPassword) async {
+    final user = _auth.currentUser;
+    if (user == null) throw 'No user logged in';
+    final cred = EmailAuthProvider.credential(email: user.email!, password: currentPassword);
+    await user.reauthenticateWithCredential(cred);
+    await user.delete();
+    setOtpVerified(false);
+  }
 }
+

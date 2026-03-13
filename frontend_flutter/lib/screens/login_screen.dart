@@ -15,8 +15,41 @@ class _LoginScreenState extends State<LoginScreen> {
   final _auth = AuthService();
   bool _isLoading = false;
   String _error = '';
+  String? _emailError;
+  String? _passwordError;
+
+  bool _validateForm() {
+    bool valid = true;
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    final emailRegex = RegExp(r'^[\w.-]+@[\w.-]+\.[a-zA-Z]{2,}$');
+
+    if (email.isEmpty) {
+      _emailError = 'Email is required.';
+      valid = false;
+    } else if (!emailRegex.hasMatch(email)) {
+      _emailError = 'Enter a valid email address.';
+      valid = false;
+    } else {
+      _emailError = null;
+    }
+
+    if (password.isEmpty) {
+      _passwordError = 'Password is required.';
+      valid = false;
+    } else if (password.length < 6) {
+      _passwordError = 'Password must be at least 6 characters.';
+      valid = false;
+    } else {
+      _passwordError = null;
+    }
+
+    setState(() {});
+    return valid;
+  }
 
   void _login() async {
+    if (!_validateForm()) return;
     setState(() {
       _isLoading = true;
       _error = '';
@@ -71,12 +104,26 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 TextField(
                   controller: _emailController,
-                  decoration: InputDecoration(labelText: 'Email'),
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: InputDecoration(
+                    labelText: 'Email',
+                    prefixIcon: const Icon(Icons.email_outlined),
+                    border: const OutlineInputBorder(),
+                    errorText: _emailError,
+                  ),
+                  onChanged: (_) { if (_emailError != null) setState(() => _emailError = null); },
                 ),
+                const SizedBox(height: 12),
                 TextField(
                   controller: _passwordController,
-                  decoration: InputDecoration(labelText: 'Password'),
+                  decoration: InputDecoration(
+                    labelText: 'Password',
+                    prefixIcon: const Icon(Icons.lock_outline),
+                    border: const OutlineInputBorder(),
+                    errorText: _passwordError,
+                  ),
                   obscureText: true,
+                  onChanged: (_) { if (_passwordError != null) setState(() => _passwordError = null); },
                 ),
                 Align(
                   alignment: Alignment.centerRight,

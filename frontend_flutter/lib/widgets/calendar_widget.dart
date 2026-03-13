@@ -102,6 +102,10 @@ class CalendarWidgetState extends State<CalendarWidget> {
     int reminderMinutes = event?.reminderMinutesBefore ?? 15;
     String selectedTimezone = event?.timezone ?? 'UTC';
 
+    // --- Validation state ---
+    String? titleError;
+    String? timeError;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -119,18 +123,54 @@ class CalendarWidgetState extends State<CalendarWidget> {
                   style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.indigo),
                 ),
                 const SizedBox(height: 10),
+                // --- Error banner ---
+                if (timeError != null)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      border: Border.all(color: Colors.red.shade200),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.error_outline, color: Colors.red, size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(child: Text(timeError!, style: const TextStyle(color: Colors.red, fontSize: 13))),
+                      ],
+                    ),
+                  ),
                 TextField(
                   controller: titleController,
-                  decoration: const InputDecoration(labelText: "Event Title", prefixIcon: Icon(Icons.title)),
+                  decoration: InputDecoration(
+                    labelText: "Event Title *",
+                    prefixIcon: const Icon(Icons.title),
+                    errorText: titleError,
+                    border: const OutlineInputBorder(),
+                  ),
+                  onChanged: (_) {
+                    if (titleError != null) setModalState(() => titleError = null);
+                  },
                 ),
+                const SizedBox(height: 8),
                 TextField(
                   controller: descriptionController,
-                  decoration: const InputDecoration(labelText: "Description", prefixIcon: Icon(Icons.description)),
+                  decoration: const InputDecoration(
+                    labelText: "Description",
+                    prefixIcon: Icon(Icons.description),
+                    border: OutlineInputBorder(),
+                  ),
                   maxLines: 2,
                 ),
+                const SizedBox(height: 8),
                 TextField(
                   controller: locationController,
-                  decoration: const InputDecoration(labelText: "Location", prefixIcon: Icon(Icons.location_on)),
+                  decoration: const InputDecoration(
+                    labelText: "Location",
+                    prefixIcon: Icon(Icons.location_on),
+                    border: OutlineInputBorder(),
+                  ),
                 ),
                 const SizedBox(height: 20),
                 Row(
@@ -138,18 +178,27 @@ class CalendarWidgetState extends State<CalendarWidget> {
                     Expanded(
                       child: ListTile(
                         title: const Text("Start Time"),
-                        subtitle: Text(DateFormat('h:mm a').format(startTime)),
+                        subtitle: Text(DateFormat('MMM d, h:mm a').format(startTime)),
+                        leading: const Icon(Icons.access_time, color: Colors.indigo),
                         onTap: () async {
+                          final pickedDate = await showDatePicker(
+                            context: context,
+                            initialDate: startTime,
+                            firstDate: DateTime.now().subtract(const Duration(days: 365)),
+                            lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+                          );
+                          if (pickedDate == null) return;
                           final time = await showTimePicker(
                             context: context,
                             initialTime: TimeOfDay.fromDateTime(startTime),
                           );
                           if (time != null) {
                             setModalState(() {
-                              startTime = DateTime(startTime.year, startTime.month, startTime.day, time.hour, time.minute);
+                              startTime = DateTime(pickedDate.year, pickedDate.month, pickedDate.day, time.hour, time.minute);
                               if (endTime.isBefore(startTime)) {
                                 endTime = startTime.add(const Duration(hours: 1));
                               }
+                              timeError = null;
                             });
                           }
                         },
@@ -158,15 +207,24 @@ class CalendarWidgetState extends State<CalendarWidget> {
                     Expanded(
                       child: ListTile(
                         title: const Text("End Time"),
-                        subtitle: Text(DateFormat('h:mm a').format(endTime)),
+                        subtitle: Text(DateFormat('MMM d, h:mm a').format(endTime)),
+                        leading: const Icon(Icons.access_time_filled, color: Colors.indigo),
                         onTap: () async {
+                          final pickedDate = await showDatePicker(
+                            context: context,
+                            initialDate: endTime,
+                            firstDate: startTime,
+                            lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+                          );
+                          if (pickedDate == null) return;
                           final time = await showTimePicker(
                             context: context,
                             initialTime: TimeOfDay.fromDateTime(endTime),
                           );
                           if (time != null) {
                             setModalState(() {
-                              endTime = DateTime(endTime.year, endTime.month, endTime.day, time.hour, time.minute);
+                              endTime = DateTime(pickedDate.year, pickedDate.month, pickedDate.day, time.hour, time.minute);
+                              timeError = null;
                             });
                           }
                         },
@@ -324,10 +382,33 @@ class CalendarWidgetState extends State<CalendarWidget> {
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo, foregroundColor: Colors.white),
                         onPressed: () async {
+                          // --- Full Validation ---
+                          bool isValid = true;
+
                           if (titleController.text.trim().isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Title is required")));
-                            return;
+                            setModalState(() => titleError = 'Event title is required.');
+                            isValid = false;
+                          } else if (titleController.text.trim().length < 2) {
+                            setModalState(() => titleError = 'Title must be at least 2 characters.');
+                            isValid = false;
+                          } else if (titleController.text.trim().length > 100) {
+                            setModalState(() => titleError = 'Title must be under 100 characters.');
+                            isValid = false;
+                          } else {
+                            setModalState(() => titleError = null);
                           }
+
+                          if (!endTime.isAfter(startTime)) {
+                            setModalState(() => timeError = 'End time must be after start time.');
+                            isValid = false;
+                          } else if (endTime.difference(startTime).inMinutes < 5) {
+                            setModalState(() => timeError = 'Event must be at least 5 minutes long.');
+                            isValid = false;
+                          } else {
+                            setModalState(() => timeError = null);
+                          }
+
+                          if (!isValid) return;
 
                           String? rule;
                           if (freq != null) {

@@ -6,7 +6,7 @@ try {
         credential: admin.credential.cert(serviceAccount)
     });
 } catch (e) {
-    console.warn("Could not find serviceAccountKey.json in backend/ folder. Warning: Firebase Admin may not work.");
+    console.warn("Could NOT find serviceAccountKey.json in backend/ folder. Warning: Firebase Admin may not work correctly without proper credentials.");
     admin.initializeApp();
 }
 

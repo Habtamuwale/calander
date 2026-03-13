@@ -3,6 +3,7 @@ import '../services/auth_service.dart';
 import '../widgets/calendar_widget.dart';
 import '../widgets/event_list_widget.dart';
 import 'login_screen.dart';
+import 'profile_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   @override
@@ -32,6 +33,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
+            tooltip: 'Logout',
             onPressed: _logout,
           ),
         ],
@@ -72,6 +74,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
             ),
           ),
+          // --- Profile Tab ---
+          const ProfileScreen(),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -81,6 +85,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.calendar_month), label: 'Calendar'),
           BottomNavigationBarItem(icon: Icon(Icons.list_alt), label: 'Upcoming'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
       ),
       floatingActionButton: FloatingActionButton(
