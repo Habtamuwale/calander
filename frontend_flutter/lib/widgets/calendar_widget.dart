@@ -96,6 +96,30 @@ class CalendarWidgetState extends State<CalendarWidget> {
 
     DateTime startTime = event?.startTime ?? date ?? DateTime.now();
     DateTime endTime = event?.endTime ?? startTime.add(const Duration(hours: 1));
+    DateTime? untilDate;
+
+    // Parse UNTIL from rule
+    if (event?.recurrenceRule?.contains('UNTIL=') == true) {
+      final match = RegExp(r'UNTIL=(\d{4})(\d{2})(\d{2})').firstMatch(event!.recurrenceRule!);
+      if (match != null) {
+        untilDate = DateTime(
+          int.parse(match.group(1)!),
+          int.parse(match.group(2)!),
+          int.parse(match.group(3)!),
+        );
+      }
+    }
+
+    List<int> selectedMonthDays = [];
+    if (event?.recurrenceRule?.contains('BYMONTHDAY=') == true) {
+      final match = RegExp(r'BYMONTHDAY=([^;]+)').firstMatch(event!.recurrenceRule!);
+      if (match != null) {
+        selectedMonthDays = match.group(1)!.split(',').map(int.parse).toList();
+      }
+    } else if (freq == 'MONTHLY' && bySetPos == null) {
+      // Default to the start date's day if it's a simple monthly recurrence
+      selectedMonthDays = [startTime.day];
+    }
 
     Color selectedColor = event?.color ?? Colors.indigo;
     bool hasReminder = event?.hasReminder ?? false;
@@ -279,25 +303,65 @@ class CalendarWidgetState extends State<CalendarWidget> {
                       )).toList(),
                     ),
                   ],
-                  if (freq == 'MONTHLY' || freq == 'YEARLY') ...[
-                    const SizedBox(height: 10),
-                    DropdownButtonFormField<int>(
-                      value: bySetPos,
-                      decoration: const InputDecoration(labelText: "Position", prefixIcon: Icon(Icons.format_list_numbered)),
-                      items: const [
-                        DropdownMenuItem(child: Text("Same date each cycle"), value: null),
-                        DropdownMenuItem(child: Text("First occurrence"), value: 1),
-                        DropdownMenuItem(child: Text("Second occurrence"), value: 2),
-                        DropdownMenuItem(child: Text("Third occurrence"), value: 3),
-                        DropdownMenuItem(child: Text("Fourth occurrence"), value: 4),
-                        DropdownMenuItem(child: Text("Last occurrence"), value: -1),
+                    if (freq == 'MONTHLY' || freq == 'YEARLY') ...[
+                      const SizedBox(height: 10),
+                      DropdownButtonFormField<int>(
+                        value: bySetPos,
+                        decoration: const InputDecoration(labelText: "Frequency Mode", prefixIcon: Icon(Icons.format_list_numbered)),
+                        items: const [
+                          DropdownMenuItem(child: Text("Specific Date(s)"), value: null),
+                          DropdownMenuItem(child: Text("Relative (e.g. First Friday)"), value: 1),
+                        ],
+                        onChanged: (val) => setModalState(() {
+                          bySetPos = val;
+                          if (val == 1) bySetPos = 1; // Default to first occurrence if switched to relative
+                        }),
+                      ),
+                      if (bySetPos == null && freq == 'MONTHLY') ...[
+                        const SizedBox(height: 10),
+                        const Text("Select Days of Month:"),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 4,
+                          runSpacing: 4,
+                          children: List.generate(31, (index) {
+                            final day = index + 1;
+                            return ChoiceChip(
+                              label: Text(day.toString(), style: const TextStyle(fontSize: 10)),
+                              selected: selectedMonthDays.contains(day),
+                              onSelected: (selected) {
+                                setModalState(() {
+                                  if (selected) {
+                                    selectedMonthDays.add(day);
+                                  } else {
+                                    if (selectedMonthDays.length > 1) selectedMonthDays.remove(day);
+                                  }
+                                  selectedMonthDays.sort();
+                                });
+                              },
+                              visualDensity: VisualDensity.compact,
+                              padding: EdgeInsets.zero,
+                            );
+                          }),
+                        ),
                       ],
-                      onChanged: (val) => setModalState(() => bySetPos = val),
-                    ),
-                    if (bySetPos != null) ...[
-                       const SizedBox(height: 10),
-                       const Text("Of which days:"),
-                       Wrap(
+                      if (bySetPos != null) ...[
+                        const SizedBox(height: 10),
+                        DropdownButtonFormField<int>(
+                          value: bySetPos,
+                          decoration: const InputDecoration(labelText: "Occurrence", prefixIcon: Icon(Icons.repeat_one)),
+                          items: const [
+                            DropdownMenuItem(child: Text("First occurrence"), value: 1),
+                            DropdownMenuItem(child: Text("Second occurrence"), value: 2),
+                            DropdownMenuItem(child: Text("Third occurrence"), value: 3),
+                            DropdownMenuItem(child: Text("Fourth occurrence"), value: 4),
+                            DropdownMenuItem(child: Text("Last occurrence"), value: -1),
+                          ],
+                          onChanged: (val) => setModalState(() => bySetPos = val),
+                        ),
+                        const SizedBox(height: 10),
+                        const Text("Of which days:"),
+                        Wrap(
                           spacing: 4,
                           children: ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'].map((day) => FilterChip(
                             label: Text(day, style: const TextStyle(fontSize: 10)),
@@ -310,13 +374,27 @@ class CalendarWidgetState extends State<CalendarWidget> {
                             },
                           )).toList(),
                         ),
-                        const SizedBox(height: 4),
-                        TextButton(
-                          onPressed: () => setModalState(() => selectedDays = ['MO', 'TU', 'WE', 'TH', 'FR']),
-                          child: const Text("Select All Weekdays", style: TextStyle(fontSize: 12)),
-                        ),
+                      ],
                     ],
-                  ],
+                    const SizedBox(height: 15),
+                    ListTile(
+                      title: const Text("End Recurrence", style: TextStyle(fontSize: 14)),
+                      subtitle: Text(untilDate == null ? "Never" : DateFormat('MMM d, yyyy').format(untilDate!)),
+                      trailing: untilDate != null ? IconButton(
+                        icon: const Icon(Icons.clear, size: 18),
+                        onPressed: () => setModalState(() => untilDate = null),
+                      ) : null,
+                      leading: const Icon(Icons.event_busy, color: Colors.grey),
+                      onTap: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: untilDate ?? startTime.add(const Duration(days: 30)),
+                          firstDate: startTime,
+                          lastDate: DateTime.now().add(const Duration(days: 365 * 10)),
+                        );
+                        if (picked != null) setModalState(() => untilDate = picked);
+                      },
+                    ),
                 ],
                 const SizedBox(height: 20),
                 SwitchListTile(
@@ -425,12 +503,16 @@ class CalendarWidgetState extends State<CalendarWidget> {
                               } else {
                                 rule += ";BYDAY=${selectedDays.join(',')}";
                               }
-                            } else if (freq == 'MONTHLY' && bySetPos != null) {
-                              if (selectedDays.isEmpty) {
-                                final day = DateFormat('EE').format(startTime).substring(0, 2).toUpperCase();
-                                rule += ";BYDAY=$day;BYSETPOS=$bySetPos";
+                            } else if (freq == 'MONTHLY') {
+                              if (bySetPos == null) {
+                                rule += ";BYMONTHDAY=${selectedMonthDays.isEmpty ? startTime.day : selectedMonthDays.join(',')}";
                               } else {
-                                rule += ";BYDAY=${selectedDays.join(',')};BYSETPOS=$bySetPos";
+                                if (selectedDays.isEmpty) {
+                                  final day = DateFormat('EE').format(startTime).substring(0, 2).toUpperCase();
+                                  rule += ";BYDAY=$day;BYSETPOS=$bySetPos";
+                                } else {
+                                  rule += ";BYDAY=${selectedDays.join(',')};BYSETPOS=$bySetPos";
+                                }
                               }
                             } else if (freq == 'YEARLY' && bySetPos != null) {
                                // Syncfusion requires BYMONTH for yearly relative rules
@@ -441,6 +523,11 @@ class CalendarWidgetState extends State<CalendarWidget> {
                                } else {
                                  rule += ";BYDAY=${selectedDays.join(',')};BYSETPOS=$bySetPos";
                                }
+                            }
+
+                            if (untilDate != null) {
+                              final untilStr = DateFormat('yyyyMMdd').format(untilDate!);
+                              rule += ";UNTIL=$untilStr";
                             }
                           }
 
