@@ -39,7 +39,10 @@ router.post('/forgot-password', async (req, res) => {
         res.json({ message: 'If an account exists with this email, a reset link has been sent.' });
     } catch (error) {
         console.error('Error in forgot-password flow:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ 
+            error: 'Failed to generate or send reset link',
+            details: error.message 
+        });
     }
 });
 
@@ -121,11 +124,17 @@ router.post('/reset-password-otp', async (req, res) => {
     }
 
     try {
+        console.log(`[Password Reset] Attempting password update for: ${email}`);
         const user = await auth.getUserByEmail(email);
         await auth.updateUser(user.uid, { password: newPassword });
+        console.log(`[Password Reset] Successfully updated password for: ${email}`);
         res.json({ message: 'Password updated successfully!' });
     } catch (error) {
-        res.status(500).json({ error: 'Update failed' });
+        console.error(`[Password Reset] FAILED for ${email}:`, error);
+        res.status(500).json({ 
+            error: 'Failed to update password',
+            details: error.message 
+        });
     }
 });
 

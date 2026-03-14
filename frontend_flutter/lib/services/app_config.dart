@@ -1,7 +1,7 @@
 class AppConfig {
-  // --- REMOTE BACKEND URL ---
-  // When you host your backend (e.g., on Render or Railway), 
-  // put the URL here. Example: 'https://my-api.onrender.com'
+  // --- BACKEND URL ---
+  // Use 'http://localhost:5000' for Web/Desktop/iOS
+  // Use 'http://10.0.2.2:5000' for Android Emulator
   static const String baseUrl = 'http://localhost:5000'; 
 
   // --- API ENDPOINTS ---

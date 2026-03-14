@@ -34,11 +34,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     });
 
     try {
-      await _auth.requestOTP(_emailController.text);
+      await _auth.requestOTP(email);
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => OtpVerificationScreen(email: _emailController.text),
+          builder: (context) => OtpVerificationScreen(email: email),
         ),
       );
     } catch (e) {
@@ -84,7 +84,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 ),
                 SizedBox(height: 8),
                 Text(
-                  "Enter your email address and we'll send you a link to reset your password.",
+                  "Enter your email address and we'll send you a 6-digit OTP code to reset your password.",
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Colors.grey[600]),
                 ),
@@ -121,7 +121,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           foregroundColor: Colors.white,
                         ),
                         onPressed: _resetPassword,
-                        child: Text("Send Reset Link"),
+                        child: Text("Send OTP Code"),
                       ),
                 SizedBox(height: 16),
                 TextButton(

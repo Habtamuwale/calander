@@ -88,7 +88,7 @@ class AuthService extends ChangeNotifier {
       if (response.statusCode == 200) {
         return data['message'] ?? 'Check your email for a reset link.';
       } else {
-        throw data['error'] ?? 'Failed to send reset email';
+        throw data['details'] ?? data['error'] ?? 'Failed to send reset email';
       }
     } catch (e) {
       print("Password Reset Error: $e");
@@ -108,7 +108,7 @@ class AuthService extends ChangeNotifier {
         _lastOtpEmail = email;
         return data['message'];
       }
-      throw data['error'] ?? 'Failed to request OTP';
+      throw data['details'] ?? data['error'] ?? 'Failed to request OTP';
     } catch (e) {
       rethrow;
     }
@@ -122,7 +122,7 @@ class AuthService extends ChangeNotifier {
     );
     final data = jsonDecode(response.body);
     if (response.statusCode == 200) return true;
-    throw data['error'] ?? 'Invalid OTP';
+    throw data['details'] ?? data['error'] ?? 'Invalid OTP';
   }
 
   Future<String> resetPasswordWithOTP(String email, String newPassword) async {
@@ -133,7 +133,7 @@ class AuthService extends ChangeNotifier {
     );
     final data = jsonDecode(response.body);
     if (response.statusCode == 200) return data['message'];
-    throw data['error'] ?? 'Reset failed';
+    throw data['details'] ?? data['error'] ?? 'Reset failed';
   }
 
   // --- Profile Management ---
