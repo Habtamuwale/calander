@@ -4,11 +4,40 @@ A state-of-the-art, cross-platform event scheduling application built with **Flu
 
 ---
 
-## 📸 Visual Showcase
+## 📸 App Visuals & Gallery
 
-| Login Screen | Home Calendar | Event Creation |
+### 🔐 Authentication Flow
+| Login | Signup | OTP Verification |
 | :---: | :---: | :---: |
-| ![Login](./screenshots/login.png) | ![Calendar](./screenshots/viewscreen.png) | ![Form](./screenshots/Scheduled_form_screen.png) |
+| ![Login](./screenshots/login.png) | ![Signup](./screenshots/signup.png) | ![OTP](./screenshots/OTP_screen.png) |
+| *Login Screen* | *Signup Screen* | *Secure OTP* |
+
+| Forgot Password | Reset Password | Login (Alt) |
+| :---: | :---: | :---: |
+| ![Forgot Password](./screenshots/forget_email_screen.png) | ![Reset Password](./screenshots/enter_new_password.png) | ![Login Alt](./screenshots/login%20page.png) |
+| *Email Input* | *New Password* | *Alt Login* |
+
+### 📅 Calendar & Event Management
+| Main Calendar View | Event Creation Form | Time Picker |
+| :---: | :---: | :---: |
+| ![Calendar](./screenshots/viewscreen.png) | ![Event Form](./screenshots/Scheduled_form_screen.png) | ![Time Picker](./screenshots/Time_form.png) |
+| *Visual Calendar* | *New Event* | *Time Selection* |
+
+| Date Picker | Recurrence Settings | Edit Event |
+| :---: | :---: | :---: |
+| ![Date Picker](./screenshots/date_form.png) | ![Recurrence](./screenshots/select_daily_month_year.png) | ![Edit Form](./screenshots/sheduled_edit_form.png) |
+| *Date Selection* | *Complex Patterns* | *Modify Event* |
+
+| Event Details | Upcoming Schedule | Day Indicator |
+| :---: | :---: | :---: |
+| ![Details](./screenshots/schedule_details.png) | ![Upcoming](./screenshots/upcoming_scheduled.png) | ![Indicator](./screenshots/scheduled_day_indicater.png) |
+| *Event Info* | *List View* | *Day Markers* |
+
+### 👤 Profile & Others
+| Profile Settings 1 | Profile Settings 2 | System Screenshot |
+| :---: | :---: | :---: |
+| ![Profile 1](./screenshots/edite_profile_1.png) | ![Profile 2](./screenshots/edit_profile_2.png) | ![System](./screenshots/Screenshot%20from%202026-03-14%2009-48-50.png) |
+| *Personal Info* | *Update Profile* | *Dev Progress* |
 
 ---
 
@@ -199,4 +228,4 @@ flutter run -d linux
 This project is licensed under the ISC License.
 
 ---
-*Created with ❤️ by the Vibrant Scheduler Team*
+*Created with ❤️ by Habtamu Wale*
