@@ -394,6 +394,9 @@ class CalendarWidgetState extends State<CalendarWidget> {
                           } else if (titleController.text.trim().length > 100) {
                             setModalState(() => titleError = 'Title must be under 100 characters.');
                             isValid = false;
+                          } else if (!RegExp(r'[a-zA-Z0-9]').hasMatch(titleController.text)) {
+                            setModalState(() => titleError = 'Title must contain at least one letter or number.');
+                            isValid = false;
                           } else {
                             setModalState(() => titleError = null);
                           }

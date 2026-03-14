@@ -81,15 +81,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // ---- Update Email ----
   bool _validateEmailForm() {
     bool valid = true;
-    final emailRegex = RegExp(r'^[\w.-]+@[\w.-]+\.[a-zA-Z]{2,}$');
+    final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
     final email = _newEmailController.text.trim();
     setState(() {
       _newEmailError = email.isEmpty
           ? 'New email is required.'
           : !emailRegex.hasMatch(email)
               ? 'Enter a valid email address.'
-              : null;
-      _emailPasswordError = _emailPasswordController.text.isEmpty ? 'Password is required.' : null;
+              : email == _auth.currentUser?.email
+                  ? 'This is already your current email.'
+                  : null;
+      _emailPasswordError = _emailPasswordController.text.isEmpty ? 'Password is required to confirm.' : null;
       if (_newEmailError != null || _emailPasswordError != null) valid = false;
     });
     return valid;
@@ -125,20 +127,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final confirm = _confirmPasswordController.text;
     setState(() {
       _currentPasswordError = _currentPasswordController.text.isEmpty ? 'Current password is required.' : null;
+      
       if (newPwd.isEmpty) {
         _newPasswordError = 'New password is required.';
-      } else if (newPwd.length < 6) {
-        _newPasswordError = 'Password must be at least 6 characters.';
-      } else if (!RegExp(r'[A-Za-z]').hasMatch(newPwd) || !RegExp(r'[0-9]').hasMatch(newPwd)) {
-        _newPasswordError = 'Must contain letters and numbers.';
+      } else if (newPwd.length < 8) {
+        _newPasswordError = 'Password must be at least 8 characters.';
+      } else if (newPwd == _currentPasswordController.text) {
+        _newPasswordError = 'New password cannot be the same as current.';
+      } else if (!RegExp(r'[A-Z]').hasMatch(newPwd)) {
+        _newPasswordError = 'Include at least one uppercase letter.';
+      } else if (!RegExp(r'[0-9]').hasMatch(newPwd)) {
+        _newPasswordError = 'Include at least one number.';
+      } else if (!RegExp(r'[!@#\$&*~]').hasMatch(newPwd)) {
+        _newPasswordError = 'Include one special character (!@#\$&*~).';
       } else {
         _newPasswordError = null;
       }
+
       _confirmPasswordError = confirm.isEmpty
           ? 'Please confirm your new password.'
           : confirm != newPwd
               ? 'Passwords do not match.'
               : null;
+      
       if (_currentPasswordError != null || _newPasswordError != null || _confirmPasswordError != null) {
         valid = false;
       }

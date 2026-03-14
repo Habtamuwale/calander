@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
-import 'dashboard_screen.dart';
+import 'otp_verification_screen.dart';
 
 class SignupScreen extends StatefulWidget {
   @override
@@ -25,7 +25,9 @@ class _SignupScreenState extends State<SignupScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
     final confirm = _confirmController.text;
-    final emailRegex = RegExp(r'^[\w.-]+@[\w.-]+\.[a-zA-Z]{2,}$');
+    
+    // Improved email regex
+    final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
 
     if (email.isEmpty) {
       _emailError = 'Email is required.';
@@ -40,11 +42,17 @@ class _SignupScreenState extends State<SignupScreen> {
     if (password.isEmpty) {
       _passwordError = 'Password is required.';
       valid = false;
-    } else if (password.length < 6) {
-      _passwordError = 'Password must be at least 6 characters.';
+    } else if (password.length < 8) {
+      _passwordError = 'Password must be at least 8 characters.';
       valid = false;
-    } else if (!RegExp(r'[A-Za-z]').hasMatch(password) || !RegExp(r'[0-9]').hasMatch(password)) {
-      _passwordError = 'Password must contain letters and numbers.';
+    } else if (!RegExp(r'[A-Z]').hasMatch(password)) {
+      _passwordError = 'Include at least one uppercase letter.';
+      valid = false;
+    } else if (!RegExp(r'[0-9]').hasMatch(password)) {
+      _passwordError = 'Include at least one number.';
+      valid = false;
+    } else if (!RegExp(r'[!@#\$&*~]').hasMatch(password)) {
+      _passwordError = 'Include one special character (!@#\$&*~).';
       valid = false;
     } else {
       _passwordError = null;
@@ -72,12 +80,38 @@ class _SignupScreenState extends State<SignupScreen> {
     });
 
     try {
-      await _auth.signUp(_emailController.text, _passwordController.text);
-      Navigator.of(context).popUntil((route) => route.isFirst);
+      final email = _emailController.text.trim();
+      await _auth.signUp(email, _passwordController.text);
+      
+      if (mounted) {
+        setState(() => _isLoading = false);
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Signup Successful! Redirecting to verify your email..."),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+
+        // Small delay to let the user see the success message
+        await Future.delayed(Duration(seconds: 1));
+        
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => OtpVerificationScreen(email: email),
+            ),
+          );
+        }
+      }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = e.toString();
+          _error = e.toString().contains('email-already-in-use') 
+              ? 'This email is already registered.' 
+              : e.toString();
           _isLoading = false;
         });
       }

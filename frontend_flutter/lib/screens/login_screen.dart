@@ -22,13 +22,15 @@ class _LoginScreenState extends State<LoginScreen> {
     bool valid = true;
     final email = _emailController.text.trim();
     final password = _passwordController.text;
-    final emailRegex = RegExp(r'^[\w.-]+@[\w.-]+\.[a-zA-Z]{2,}$');
+    
+    // Improved email regex matching the one used in signup
+    final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
 
     if (email.isEmpty) {
       _emailError = 'Email is required.';
       valid = false;
     } else if (!emailRegex.hasMatch(email)) {
-      _emailError = 'Enter a valid email address.';
+      _emailError = 'Please enter a valid email address.';
       valid = false;
     } else {
       _emailError = null;
@@ -37,8 +39,8 @@ class _LoginScreenState extends State<LoginScreen> {
     if (password.isEmpty) {
       _passwordError = 'Password is required.';
       valid = false;
-    } else if (password.length < 6) {
-      _passwordError = 'Password must be at least 6 characters.';
+    } else if (password.length < 8) {
+      _passwordError = 'Password must be at least 8 characters.';
       valid = false;
     } else {
       _passwordError = null;
@@ -56,13 +58,23 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      await _auth.signIn(_emailController.text, _passwordController.text);
-      // On success, we don't reset _isLoading to avoid flickering the form 
-      // before the StreamBuilder switches to the OTP screen.
+      await _auth.signIn(_emailController.text.trim(), _passwordController.text);
+      // On success, the Main.dart StreamBuilder will handle the switch to 
+      // the Dashboard or OTP screen automatically.
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = e.toString();
+          // Detailed mapping of Firebase error codes to user-friendly messages
+          final errorStr = e.toString();
+          if (errorStr.contains('invalid-credential') || errorStr.contains('user-not-found') || errorStr.contains('wrong-password')) {
+            _error = "Invalid email or password. Please try again.";
+          } else if (errorStr.contains('network-request-failed')) {
+            _error = "Network error. Please check your internet connection.";
+          } else if (errorStr.contains('too-many-requests')) {
+            _error = "Too many failed attempts. Please try again later.";
+          } else {
+            _error = "Login failed: ${e.toString().split(']').last.trim()}";
+          }
           _isLoading = false;
         });
       }

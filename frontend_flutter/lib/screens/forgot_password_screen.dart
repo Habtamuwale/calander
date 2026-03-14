@@ -15,8 +15,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   String _message = '';
 
   void _resetPassword() async {
-    if (_emailController.text.isEmpty) {
-      setState(() => _error = 'Please enter your email');
+    final email = _emailController.text.trim();
+    final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+
+    if (email.isEmpty) {
+      setState(() => _error = 'Please enter your email address.');
+      return;
+    }
+    if (!emailRegex.hasMatch(email)) {
+      setState(() => _error = 'Please enter a valid email address.');
       return;
     }
 

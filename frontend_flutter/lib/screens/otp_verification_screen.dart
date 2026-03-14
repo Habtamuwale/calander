@@ -44,31 +44,48 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   }
 
   void _verifyOtp() async {
-    if (_otpController.text.length != 6) {
-      setState(() => _error = 'Please enter a 6-digit OTP');
+    final otp = _otpController.text.trim();
+    if (otp.isEmpty) {
+      setState(() => _error = 'OTP code is required.');
+      return;
+    }
+    if (otp.length != 6 || !RegExp(r'^\d+$').hasMatch(otp)) {
+      setState(() => _error = 'Please enter a valid 6-digit number.');
       return;
     }
 
     setState(() { _isLoading = true; _error = ''; });
 
     try {
-      await _auth.verifyOTP(widget.email, _otpController.text);
+      await _auth.verifyOTP(widget.email, otp);
       
-      // If the user is already authenticated in Firebase (Login flow), 
-      // just mark OTP as verified to let the main.dart StreamBuilder show the dashboard.
-      if (FirebaseAuth.instance.currentUser != null) {
-        _auth.setOtpVerified(true);
-        // We don't need to navigate, StreamBuilder will rebuild
-      } else {
-        setState(() {
-          _isVerified = true;
-          _message = 'OTP Verified! Now enter your new password.';
-        });
+      if (mounted) {
+        if (FirebaseAuth.instance.currentUser != null) {
+          // Success Feedback
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Email Verified! Logged in successfully."), backgroundColor: Colors.green)
+          );
+          _auth.setOtpVerified(true);
+        } else {
+          setState(() {
+            _isVerified = true;
+            _message = 'OTP Verified! You can now set your new password.';
+          });
+        }
       }
     } catch (e) {
-      setState(() => _error = e.toString());
+      setState(() {
+        final err = e.toString();
+        if (err.contains('expired') || err.contains('expired-otp')) {
+          _error = "The OTP has expired. Please request a new one.";
+        } else if (err.contains('invalid') || err.contains('incorrect')) {
+          _error = "Incorrect OTP. Please check the code and try again.";
+        } else {
+          _error = err.split(']').last.trim();
+        }
+      });
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
