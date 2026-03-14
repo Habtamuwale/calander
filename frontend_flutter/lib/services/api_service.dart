@@ -4,9 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/event_model.dart';
 import 'auth_service.dart';
+import 'app_config.dart';
 
 class ApiService {
-  final String baseUrl = 'http://localhost:5000/api/events'; 
+  final String baseUrl = AppConfig.eventsEndpoint; 
   final AuthService _auth = AuthService();
 
   // Initial mock data

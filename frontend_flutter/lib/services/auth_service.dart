@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'app_config.dart';
 
 class AuthService extends ChangeNotifier {
   static final AuthService _instance = AuthService._internal();
@@ -78,7 +79,7 @@ class AuthService extends ChangeNotifier {
   Future<String> sendPasswordResetEmail(String email) async {
     try {
       final response = await http.post(
-        Uri.parse('http://localhost:5000/api/auth/forgot-password'),
+        Uri.parse('${AppConfig.authEndpoint}/forgot-password'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email}),
       );
@@ -98,7 +99,7 @@ class AuthService extends ChangeNotifier {
   Future<String> requestOTP(String email) async {
     try {
       final response = await http.post(
-        Uri.parse('http://localhost:5000/api/auth/request-otp'),
+        Uri.parse('${AppConfig.authEndpoint}/request-otp'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email}),
       );
@@ -115,7 +116,7 @@ class AuthService extends ChangeNotifier {
 
   Future<bool> verifyOTP(String email, String otp) async {
     final response = await http.post(
-      Uri.parse('http://localhost:5000/api/auth/verify-otp'),
+      Uri.parse('${AppConfig.authEndpoint}/verify-otp'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'email': email, 'otp': otp}),
     );
@@ -126,7 +127,7 @@ class AuthService extends ChangeNotifier {
 
   Future<String> resetPasswordWithOTP(String email, String newPassword) async {
     final response = await http.post(
-      Uri.parse('http://localhost:5000/api/auth/reset-password-otp'),
+      Uri.parse('${AppConfig.authEndpoint}/reset-password-otp'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'email': email, 'newPassword': newPassword}),
     );
@@ -148,7 +149,7 @@ class AuthService extends ChangeNotifier {
     
     // 2. Call backend to update Firestore and central Auth record
     final response = await http.post(
-      Uri.parse('http://localhost:5000/api/auth/update-profile'),
+      Uri.parse('${AppConfig.authEndpoint}/update-profile'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',

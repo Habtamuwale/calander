@@ -1,4 +1,5 @@
 backend/serviceAccountKey.json
-backend/serviceAccountKey.json
-backend/serviceAccountKey.json
-backend/serviceAccountKey.json
+backend/node_modules
+backend/.env
+.firebase
+build/
