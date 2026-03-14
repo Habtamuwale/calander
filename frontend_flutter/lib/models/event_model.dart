@@ -11,7 +11,8 @@ class ScheduledEvent {
   final bool hasReminder;
   final int? reminderMinutesBefore;
   final String description;
-  final String timezone; // New Field
+  final String timezone;
+  final List<DateTime>? recurrenceExceptionDates;
 
   ScheduledEvent({
     required this.id,
@@ -24,7 +25,8 @@ class ScheduledEvent {
     this.color = Colors.indigo,
     this.hasReminder = false,
     this.reminderMinutesBefore = 15,
-    this.timezone = 'UTC', // Default to UTC
+    this.timezone = 'UTC',
+    this.recurrenceExceptionDates,
   });
 
   factory ScheduledEvent.fromJson(Map<String, dynamic> json) {
@@ -40,6 +42,9 @@ class ScheduledEvent {
       hasReminder: json['hasReminder'] ?? false,
       reminderMinutesBefore: json['reminderMinutesBefore'],
       timezone: json['timezone'] ?? 'UTC',
+      recurrenceExceptionDates: json['recurrenceExceptionDates'] != null
+          ? (json['recurrenceExceptionDates'] as List).map((d) => DateTime.parse(d)).toList()
+          : null,
     );
   }
 
@@ -55,6 +60,7 @@ class ScheduledEvent {
       'hasReminder': hasReminder,
       'reminderMinutesBefore': reminderMinutesBefore,
       'timezone': timezone,
+      'recurrenceExceptionDates': recurrenceExceptionDates?.map((d) => d.toIso8601String()).toList(),
     };
   }
   IconData get icon {

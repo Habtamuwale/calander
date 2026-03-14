@@ -81,7 +81,8 @@ class CalendarWidgetState extends State<CalendarWidget> {
     // Recurrence state
     String? freq = event?.recurrenceRule?.contains('DAILY') == true ? 'DAILY' :
                   event?.recurrenceRule?.contains('WEEKLY') == true ? 'WEEKLY' :
-                  event?.recurrenceRule?.contains('MONTHLY') == true ? 'MONTHLY' : null;
+                  event?.recurrenceRule?.contains('MONTHLY') == true ? 'MONTHLY' :
+                  event?.recurrenceRule?.contains('YEARLY') == true ? 'YEARLY' : null;
     
     int interval = 1;
     if (event?.recurrenceRule?.contains('INTERVAL=') == true) {
@@ -136,6 +137,7 @@ class CalendarWidgetState extends State<CalendarWidget> {
     // --- Validation state ---
     String? titleError;
     String? timeError;
+    String? recurrenceError;
 
     showModalBottomSheet(
       context: context,
@@ -169,6 +171,23 @@ class CalendarWidgetState extends State<CalendarWidget> {
                         const Icon(Icons.error_outline, color: Colors.red, size: 18),
                         const SizedBox(width: 8),
                         Expanded(child: Text(timeError!, style: const TextStyle(color: Colors.red, fontSize: 13))),
+                      ],
+                    ),
+                  ),
+                if (recurrenceError != null)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.shade50,
+                      border: Border.all(color: Colors.orange.shade200),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(child: Text(recurrenceError!, style: const TextStyle(color: Colors.orange, fontSize: 13))),
                       ],
                     ),
                   ),
@@ -269,7 +288,7 @@ class CalendarWidgetState extends State<CalendarWidget> {
                   value: freq,
                   decoration: const InputDecoration(labelText: "Frequency", prefixIcon: Icon(Icons.repeat)),
                   items: const [
-                    DropdownMenuItem(child: Text("None"), value: null),
+                    DropdownMenuItem(child: Text("None (Single Event)"), value: null),
                     DropdownMenuItem(child: Text("Daily"), value: "DAILY"),
                     DropdownMenuItem(child: Text("Weekly"), value: "WEEKLY"),
                     DropdownMenuItem(child: Text("Monthly"), value: "MONTHLY"),
@@ -313,15 +332,22 @@ class CalendarWidgetState extends State<CalendarWidget> {
                     if (freq == 'MONTHLY' || freq == 'YEARLY') ...[
                       const SizedBox(height: 10),
                       DropdownButtonFormField<int>(
-                        value: bySetPos,
+                        value: bySetPos == null ? null : (bySetPos != null ? 1 : null), // Use 1 as a proxy for 'any relative'
                         decoration: const InputDecoration(labelText: "Frequency Mode", prefixIcon: Icon(Icons.format_list_numbered)),
                         items: const [
                           DropdownMenuItem(child: Text("Specific Date(s)"), value: null),
                           DropdownMenuItem(child: Text("Relative (e.g. First Friday)"), value: 1),
                         ],
                         onChanged: (val) => setModalState(() {
-                          bySetPos = val;
-                          if (val == 1) bySetPos = 1; // Default to first occurrence if switched to relative
+                          if (val == 1) {
+                            bySetPos = 1; // Default to first if switching to relative
+                            if (selectedDays.isEmpty) {
+                              final day = DateFormat('EE').format(startTime).substring(0, 2).toUpperCase();
+                              selectedDays = [day];
+                            }
+                          } else {
+                            bySetPos = null;
+                          }
                         }),
                       ),
                       if (bySetPos == null && freq == 'MONTHLY') ...[
@@ -425,6 +451,30 @@ class CalendarWidgetState extends State<CalendarWidget> {
                       ],
                     ),
                   ),
+                if (freq != null) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.indigo.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.indigo.withOpacity(0.1)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.info_outline, size: 16, color: Colors.indigo),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            "Pattern: Repeats ${interval > 1 ? 'every $interval ' : ''}${freq?.toLowerCase() ?? ''}${freq == 'WEEKLY' && selectedDays.isNotEmpty ? ' on ${selectedDays.join(", ")}' : freq == 'MONTHLY' && bySetPos != null ? ' on the ${bySetPos == 1 ? '1st' : bySetPos == 2 ? '2nd' : bySetPos == 3 ? '3rd' : bySetPos == 4 ? '4th' : 'last'} ${selectedDays.join(", ")}' : freq == 'MONTHLY' && bySetPos == null ? ' on day(s) ${selectedMonthDays.join(", ")}' : ''}",
+                            style: const TextStyle(fontSize: 12, color: Colors.indigo, fontStyle: FontStyle.italic),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 15),
                 const Text("Pick a Color:"),
                 Row(
@@ -450,13 +500,67 @@ class CalendarWidgetState extends State<CalendarWidget> {
                       Expanded(
                         child: OutlinedButton(
                           onPressed: () async {
+                            final String? result = await showDialog<String>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text("Delete Event?"),
+                                content: Text(event.recurrenceRule != null 
+                                  ? "Do you want to delete only this instance or the entire series?"
+                                  : "This will permanently remove this event."),
+                                actions: [
+                                  TextButton(onPressed: () => Navigator.pop(context, null), child: const Text("Cancel")),
+                                  if (event.recurrenceRule != null)
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context, 'instance'), 
+                                      child: const Text("Only this instance")
+                                    ),
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context, 'all'), 
+                                    child: Text(event.recurrenceRule != null ? "Entire series" : "Delete", style: const TextStyle(color: Colors.red))
+                                  ),
+                                ],
+                              ),
+                            );
+
+                            if (result == null) return;
+
                             try {
-                              await _api.deleteEvent(event.id);
-                              Navigator.pop(context);
+                              if (result == 'all') {
+                                await _api.deleteEvent(event.id);
+                                if (context.mounted) {
+                                  Navigator.pop(context);
+                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Series deleted")));
+                                }
+                              } else {
+                                // Add current startTime to exceptions
+                                final List<DateTime> updatedExceptions = List<DateTime>.from(event.recurrenceExceptionDates ?? []);
+                                updatedExceptions.add(event.startTime);
+                                final updatedEvent = ScheduledEvent(
+                                  id: event.id,
+                                  subject: event.subject,
+                                  startTime: event.startTime,
+                                  endTime: event.endTime,
+                                  location: event.location,
+                                  description: event.description,
+                                  recurrenceRule: event.recurrenceRule,
+                                  color: event.color,
+                                  hasReminder: event.hasReminder,
+                                  reminderMinutesBefore: event.reminderMinutesBefore,
+                                  timezone: event.timezone,
+                                  recurrenceExceptionDates: updatedExceptions,
+                                );
+                                await _api.updateEvent(updatedEvent);
+                                if (context.mounted) {
+                                  Navigator.pop(context);
+                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Instance removed")));
+                                }
+                              }
                               await _loadEvents();
                               if (widget.onEventUpdated != null) widget.onEventUpdated!();
                             } catch (e) {
-                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Delete error: $e")));
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Delete error: $e")));
+                              }
                             }
                           },
                           child: const Text("Delete", style: TextStyle(color: Colors.red)),
@@ -494,6 +598,21 @@ class CalendarWidgetState extends State<CalendarWidget> {
                             isValid = false;
                           } else {
                             setModalState(() => timeError = null);
+                          }
+
+                          // --- Recurrence Validation ---
+                          if (freq != null) {
+                            if (untilDate != null && !untilDate!.isAfter(startTime)) {
+                              setModalState(() => recurrenceError = "End date must be after start date.");
+                              isValid = false;
+                            } else if (freq == 'MONTHLY' && bySetPos == null && selectedMonthDays.isEmpty) {
+                              setModalState(() => recurrenceError = "Please select at least one day of the month.");
+                              isValid = false;
+                            } else {
+                              setModalState(() => recurrenceError = null);
+                            }
+                          } else {
+                            setModalState(() => recurrenceError = null);
                           }
 
                           if (!isValid) return;
@@ -583,6 +702,11 @@ class CalendarWidgetState extends State<CalendarWidget> {
                             }
 
                             Navigator.pop(context);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(event == null ? "Event created successfully!" : "Event updated successfully!")),
+                              );
+                            }
                             await _loadEvents();
                             if (widget.onEventUpdated != null) widget.onEventUpdated!();
                           } catch (e) {
@@ -604,34 +728,72 @@ class CalendarWidgetState extends State<CalendarWidget> {
   }
 
   final CalendarController _calendarController = CalendarController();
+  CalendarView _currentView = CalendarView.month;
+
+  Widget _viewButton(String label, CalendarView view) {
+    final bool isSelected = _currentView == view;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: ChoiceChip(
+        label: Text(label, style: TextStyle(color: isSelected ? Colors.white : Colors.indigo, fontSize: 12)),
+        selected: isSelected,
+        selectedColor: Colors.indigo,
+        backgroundColor: Colors.indigo.withOpacity(0.05),
+        onSelected: (selected) {
+          if (selected) setState(() => _currentView = view);
+        },
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return _isLoading 
-      ? const SizedBox(height: 500, child: Center(child: CircularProgressIndicator()))
-      : SfCalendar(
-          controller: _calendarController,
-          view: CalendarView.month,
-          showNavigationArrow: true,
-          dataSource: EventDataSource(_events),
-          monthViewSettings: const MonthViewSettings(
-            showAgenda: true,
-            agendaViewHeight: 200,
-            showTrailingAndLeadingDates: false,
-            agendaStyle: AgendaStyle(
-              backgroundColor: Colors.white,
-              appointmentTextStyle: TextStyle(color: Colors.white, fontSize: 13),
-              dateTextStyle: TextStyle(color: Colors.indigo, fontWeight: FontWeight.bold),
-            ),
+    return Column(
+      children: [
+        // --- Custom Header / View Switcher ---
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            children: [
+              TextButton.icon(
+                onPressed: () => setState(() => _calendarController.displayDate = DateTime.now()),
+                icon: const Icon(Icons.today, size: 20),
+                label: const Text("Today"),
+                style: TextButton.styleFrom(foregroundColor: Colors.indigo),
+              ),
+              const Spacer(),
+              _viewButton("Month", CalendarView.month),
+              _viewButton("Week", CalendarView.week),
+              _viewButton("Day", CalendarView.day),
+            ],
           ),
-          onSelectionChanged: (details) {
-            // Use post frame callback to avoid '!_dirty' assertion error 
-            // during build-phase selection changes
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) setState(() {});
-            });
-          },
-          monthCellBuilder: (context, details) {
+        ),
+        Expanded(
+          child: _isLoading 
+            ? const Center(child: CircularProgressIndicator())
+            : SfCalendar(
+                controller: _calendarController,
+                view: _currentView,
+                showNavigationArrow: true,
+                dataSource: EventDataSource(_events),
+                monthViewSettings: const MonthViewSettings(
+                  showAgenda: true,
+                  agendaViewHeight: 200,
+                  showTrailingAndLeadingDates: false,
+                  agendaStyle: AgendaStyle(
+                    backgroundColor: Colors.white,
+                    appointmentTextStyle: TextStyle(color: Colors.white, fontSize: 13),
+                    dateTextStyle: TextStyle(color: Colors.indigo, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                onSelectionChanged: (details) {
+                  // Use post frame callback to avoid '!_dirty' assertion error 
+                  // during build-phase selection changes
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) setState(() {});
+                  });
+                },
+                monthCellBuilder: (context, details) {
             final bool isSelected = details.date == _calendarController.selectedDate;
             final DateTime now = DateTime.now();
             final bool isToday = details.date.year == now.year && 
@@ -718,8 +880,11 @@ class CalendarWidgetState extends State<CalendarWidget> {
             }
           },
           onTap: _onTap,
-        );
-  }
+        ),
+      ),
+    ],
+  );
+}
 }
 
 class EventDataSource extends CalendarDataSource {
@@ -761,5 +926,10 @@ class EventDataSource extends CalendarDataSource {
        // Catch all formatting exceptions to prevent app-level crash
        return null; 
      }
+  }
+
+  @override
+  List<DateTime>? getRecurrenceExceptionDates(int index) {
+     return appointments![index].recurrenceExceptionDates;
   }
 }

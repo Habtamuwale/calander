@@ -54,10 +54,35 @@ class _EventListWidgetState extends State<EventListWidget> {
     return "Recurring";
   }
 
-  void _deleteEvent(String id) async {
-    await _api.deleteEvent(id);
-    if (widget.onUpdate != null) widget.onUpdate!();
-    _refresh();
+  void _deleteEvent(ScheduledEvent event) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Delete Event?"),
+        content: Text(event.recurrenceRule != null 
+          ? "This will remove the entire recurring series." 
+          : "This will permanently remove this event."),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Cancel")),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true), 
+            child: const Text("Delete", style: TextStyle(color: Colors.red))
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      try {
+        await _api.deleteEvent(event.id);
+        if (widget.onUpdate != null) widget.onUpdate!();
+        _refresh();
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error deleting: $e")));
+        }
+      }
+    }
   }
 
   void _showDetailDialog(ScheduledEvent event) {
@@ -95,6 +120,20 @@ class _EventListWidgetState extends State<EventListWidget> {
         ],
       ),
     );
+  }
+
+  String _getTimeRelative(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final targetDate = DateTime(date.year, date.month, date.day);
+    final diff = targetDate.difference(today).inDays;
+
+    if (diff == 0) return "Today";
+    if (diff == 1) return "Tomorrow";
+    if (diff == -1) return "Yesterday";
+    if (diff > 1 && diff < 7) return "In $diff days";
+    if (diff < -1 && diff > -7) return "${diff.abs()} days ago";
+    return DateFormat('MMM d').format(date);
   }
 
   Widget _detailRow(IconData icon, String label, String value) {
@@ -226,6 +265,18 @@ class _EventListWidgetState extends State<EventListWidget> {
                                           DateFormat('MMM d, h:mm a').format(event.startTime),
                                           style: TextStyle(color: Colors.grey[600], fontSize: 12),
                                         ),
+                                        const SizedBox(width: 8),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: Colors.indigo.withOpacity(0.08),
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                          child: Text(
+                                            _getTimeRelative(event.startTime),
+                                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.indigo),
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   ],
@@ -251,7 +302,7 @@ class _EventListWidgetState extends State<EventListWidget> {
                           ),
                           IconButton(
                             icon: const Icon(Icons.delete_outline, color: Colors.red, size: 22),
-                            onPressed: () => _deleteEvent(event.id),
+                            onPressed: () => _deleteEvent(event),
                           ),
                         ],
                       ),
