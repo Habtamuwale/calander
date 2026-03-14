@@ -64,6 +64,22 @@ A state-of-the-art, cross-platform event scheduling application built with **Flu
 
 ---
 
+## 🏛️ System Architecture
+
+The application follows a clean **MVC (Model-View-Controller)** architectural pattern, ensuring a clear separation of concerns between the data, UI, and business logic.
+
+### 🧩 Architecture Overview
+- **Model (Data Layer)**: Handles data structures and interactions with **Firebase Firestore**. Located in `backend/models/` and `frontend_flutter/lib/models/`.
+- **View (UI Layer)**: Built with **Flutter**, providing a reactive and cross-platform user experience.
+- **Controller/API (Logic Layer)**: The **Node.js/Express** backend acts as the controller, managing business logic, authentication flows, and data orchestration.
+
+### 📡 Communication Flow
+1. **Frontend**: Sends HTTPS requests to the REST API.
+2. **Backend (Controller)**: Validates requests and calls the appropriate **Services** (OTP, Email, Firebase Admin).
+3. **Database**: Real-time synchronization is handled through **Firestore**, while sensitive operations go through the secure Node.js backend.
+
+---
+
 ## 🏗️ Project Structure
 
 ```text
