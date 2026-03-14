@@ -28,10 +28,15 @@ class CalendarWidgetState extends State<CalendarWidget> {
 
   Future<void> _loadEvents() async {
     if (!mounted) return;
-    setState(() => _isLoading = true);
+    // Use addPostFrameCallback if called during initState/build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() => _isLoading = true);
+    });
     try {
       final events = await _api.getEvents();
-      if (mounted) setState(() => _events = events);
+      if (mounted) {
+        setState(() => _events = events);
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -39,7 +44,9 @@ class CalendarWidgetState extends State<CalendarWidget> {
         );
       }
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -505,6 +512,15 @@ class CalendarWidgetState extends State<CalendarWidget> {
                               }
                             } else if (freq == 'MONTHLY') {
                               if (bySetPos == null) {
+                                // Important: startTime.day MUST be in the BYMONTHDAY list for Syncfusion to expand correctly.
+                                // If the current startTime.day isn't there, we move the startTime to the first selected day.
+                                final int firstDay = selectedMonthDays.isEmpty ? startTime.day : selectedMonthDays.first;
+                                if (startTime.day != firstDay) {
+                                  startTime = DateTime(startTime.year, startTime.month, firstDay, startTime.hour, startTime.minute);
+                                  if (endTime.isBefore(startTime)) {
+                                    endTime = startTime.add(const Duration(hours: 1));
+                                  }
+                                }
                                 rule += ";BYMONTHDAY=${selectedMonthDays.isEmpty ? startTime.day : selectedMonthDays.join(',')}";
                               } else {
                                 if (selectedDays.isEmpty) {
@@ -609,10 +625,19 @@ class CalendarWidgetState extends State<CalendarWidget> {
             ),
           ),
           onSelectionChanged: (details) {
-            setState(() {}); // Rebuild to update cell shading
+            // Use post frame callback to avoid '!_dirty' assertion error 
+            // during build-phase selection changes
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) setState(() {});
+            });
           },
           monthCellBuilder: (context, details) {
             final bool isSelected = details.date == _calendarController.selectedDate;
+            final DateTime now = DateTime.now();
+            final bool isToday = details.date.year == now.year && 
+                                details.date.month == now.month && 
+                                details.date.day == now.day;
+
             final DateTime currentMonthDate = _calendarController.displayDate ?? DateTime.now();
             final bool isCurrentMonth = details.date.month == currentMonthDate.month && 
                                        details.date.year == currentMonthDate.year;
@@ -635,11 +660,25 @@ class CalendarWidgetState extends State<CalendarWidget> {
                      Positioned.fill(
                        child: Column(
                          children: dayColors.map((color) => Expanded(
-                           child: Container(color: color.withOpacity(0.2)),
+                           child: Container(color: color.withOpacity(0.4)),
                          )).toList(),
                        ),
                      ),
                    
+                   // Today Highlight (Circle background)
+                   if (isToday)
+                     Center(
+                       child: Container(
+                         width: 32,
+                         height: 32,
+                         decoration: BoxDecoration(
+                           color: Colors.indigo.withOpacity(0.1),
+                           shape: BoxShape.circle,
+                           border: Border.all(color: Colors.indigo.withOpacity(0.5), width: 1),
+                         ),
+                       ),
+                     ),
+
                    // Selection highlight overlay
                    if (isSelected)
                      Positioned.fill(
@@ -656,9 +695,9 @@ class CalendarWidgetState extends State<CalendarWidget> {
                      child: Text(
                        details.date.day.toString(),
                        style: TextStyle(
-                         fontWeight: isSelected ? FontWeight.bold : (dayColors.isNotEmpty ? FontWeight.w600 : FontWeight.normal),
+                         fontWeight: (isSelected || isToday) ? FontWeight.bold : (dayColors.isNotEmpty ? FontWeight.w600 : FontWeight.normal),
                          color: isCurrentMonth 
-                            ? (isSelected ? Colors.indigo : (dayColors.isNotEmpty ? Colors.black87 : Colors.black54)) 
+                            ? (isToday ? Colors.indigo : (isSelected ? Colors.indigo : (dayColors.isNotEmpty ? Colors.black87 : Colors.black54))) 
                             : Colors.transparent,
                        ),
                      ),

@@ -6,7 +6,8 @@ import '../models/event_model.dart';
 class EventListWidget extends StatefulWidget {
   final VoidCallback? onUpdate;
   final Function(ScheduledEvent)? onEdit;
-  const EventListWidget({Key? key, this.onUpdate, this.onEdit}) : super(key: key);
+  final bool showHistory;
+  const EventListWidget({Key? key, this.onUpdate, this.onEdit, this.showHistory = false}) : super(key: key);
 
   @override
   _EventListWidgetState createState() => _EventListWidgetState();
@@ -128,21 +129,35 @@ class _EventListWidgetState extends State<EventListWidget> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(child: CircularProgressIndicator(color: Colors.indigo));
         }
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+        final now = DateTime.now();
+        final events = snapshot.data!.where((e) {
+          if (widget.showHistory) {
+            return e.endTime.isBefore(now);
+          } else {
+            return e.endTime.isAfter(now);
+          }
+        }).toList();
+
+        if (events.isEmpty) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(Icons.event_busy, size: 64, color: Colors.grey[400]),
                 const SizedBox(height: 16),
-                Text("No upcoming events yet.", style: TextStyle(color: Colors.grey[600], fontSize: 18)),
+                Text(
+                  widget.showHistory ? "No past events found." : "No upcoming events yet.", 
+                  style: TextStyle(color: Colors.grey[600], fontSize: 18)
+                ),
               ],
             ),
           );
         }
 
-        final events = snapshot.data!;
-        events.sort((a, b) => a.startTime.compareTo(b.startTime));
+        events.sort((a, b) => widget.showHistory 
+          ? b.startTime.compareTo(a.startTime) // Newest first for history
+          : a.startTime.compareTo(b.startTime) // Oldest first for upcoming
+        );
 
         return ListView.builder(
           shrinkWrap: true, // Crucial when inside SingleChildScrollView

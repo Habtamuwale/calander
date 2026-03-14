@@ -49,6 +49,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               });
             },
           ),
+          // --- Upcoming Tab ---
           SingleChildScrollView(
             child: Column(
               children: [
@@ -63,6 +64,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
                 EventListWidget(
+                  showHistory: false,
+                  onUpdate: () => _calendarKey.currentState?.refresh(),
+                  onEdit: (event) {
+                    setState(() => _currentIndex = 0);
+                    Future.delayed(const Duration(milliseconds: 100), () {
+                      _calendarKey.currentState?.showEditDialog(event: event);
+                    });
+                  },
+                ),
+              ],
+            ),
+          ),
+          // --- History Tab ---
+          SingleChildScrollView(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.history, color: Colors.indigo, size: 28),
+                      const SizedBox(width: 8),
+                      Text("Past Events", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.indigo[900])),
+                    ],
+                  ),
+                ),
+                EventListWidget(
+                  showHistory: true,
                   onUpdate: () => _calendarKey.currentState?.refresh(),
                   onEdit: (event) {
                     setState(() => _currentIndex = 0);
@@ -82,9 +111,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
         selectedItemColor: Colors.indigo,
+        unselectedItemColor: Colors.grey,
+        type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.calendar_month), label: 'Calendar'),
           BottomNavigationBarItem(icon: Icon(Icons.list_alt), label: 'Upcoming'),
+          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
       ),
