@@ -80,101 +80,40 @@ The application follows a clean **MVC (Model-View-Controller)** architectural pa
 
 ---
 
-## 🏗️ Project Structure
+## 🏗️ Project Structure (MVC Architecture)
 
 ```text
 .
-├── backend
-│   ├── controllers
+├── 📂 backend                  # Controller & API Logic
+│   ├── 📂 controllers          # [CONTROLLER] Request handling logic
 │   │   └── eventController.js
-│   ├── models
+│   ├── 📂 models               # [MODEL] Data schemas & definitions
 │   │   └── Event.js
-│   ├── package.json
-│   ├── package-lock.json
-│   ├── routes
+│   ├── 📂 routes               # API Endpoint Routing
 │   │   ├── authRoutes.js
 │   │   └── eventRoutes.js
-│   ├── server.js
-│   ├── serviceAccountKey.json
-│   └── services
-│       ├── authService.js
-│       ├── emailService.js
-│       ├── firebase.js
-│       ├── otpService.js
-│       └── scheduler.js
-├── frontend_flutter
-│   ├── analysis_options.yaml
-│   ├── android
-│   │   ├── app
-│   │   ├── build.gradle.kts
-│   │   ├── frontend_flutter_android.iml
-│   │   ├── gradle
-│   │   ├── gradle.properties
-│   │   ├── gradlew
-│   │   ├── gradlew.bat
-│   │   ├── local.properties
-│   │   └── settings.gradle.kts
-│   ├── assets
-│   │   └── sounds
-│   ├── firebase.json
-│   ├── frontend_flutter.iml
-│   ├── ios
-│   │   ├── Flutter
-│   │   ├── Runner
-│   │   ├── RunnerTests
-│   │   ├── Runner.xcodeproj
-│   │   └── Runner.xcworkspace
-│   ├── lib
-│   │   ├── firebase_options.dart
-│   │   ├── main.dart
-│   │   ├── models
-│   │   ├── screens
-│   │   ├── services
-│   │   └── widgets
-│   ├── linux
-│   │   ├── CMakeLists.txt
-│   │   ├── flutter
-│   │   └── runner
-│   ├── macos
-│   │   ├── Flutter
-│   │   ├── Runner
-│   │   ├── RunnerTests
-│   │   ├── Runner.xcodeproj
-│   │   └── Runner.xcworkspace
-│   ├── pubspec.lock
-│   ├── pubspec.yaml
-│   ├── README.md
-│   ├── test
-│   │   └── widget_test.dart
-│   ├── web
-│   │   ├── favicon.png
-│   │   ├── icons
-│   │   ├── index.html
-│   │   └── manifest.json
-│   └── windows
-│       ├── CMakeLists.txt
-│       ├── flutter
-│       └── runner
-├── README.md
-└── screenshots
-    ├── date_form.png
-    ├── edite_profile_1.png
-    ├── edit_profile_2.png
-    ├── enter_new_password.png
-    ├── forget_email_screen.png
-    ├── login page.png
-    ├── login.png
-    ├── OTP_screen.png
-    ├── scheduled_day_indicater.png
-    ├── schedule_details.png
-    ├── Scheduled_form_screen.png
-    ├── Screenshot from 2026-03-14 09-48-50.png
-    ├── select_daily_month_year.png
-    ├── sheduled_edit_form.png
-    ├── signup.png
-    ├── Time_form.png
-    ├── upcoming_scheduled.png
-    └── viewscreen.png
+│   ├── 📂 services             # Business Logic & Infrastructure (OTP, Firebase)
+│   │   ├── authService.js
+│   │   ├── emailService.js
+│   │   ├── firebase.js
+│   │   ├── otpService.js
+│   │   └── scheduler.js
+│   ├── server.js               # Entry Point
+│   └── serviceAccountKey.json
+│
+├── 📂 frontend_flutter         # View & Client UI
+│   ├── 📂 lib
+│   │   ├── 📂 screens          # [VIEW] Application Screens/Pages
+│   │   ├── 📂 widgets          # [VIEW] Reusable UI Components
+│   │   ├── 📂 models           # [MODEL] Frontend Data objects
+│   │   ├── 📂 services         # API Client & Backend Communication
+│   │   ├── main.dart           # App Entry Point
+│   │   └── firebase_options.dart
+│   ├── pubspec.yaml            # Dependencies
+│   └── 📂 assets               # Static Visuals
+│
+└── 📂 screenshots              # Project Documentation Visuals
+    ├── (18 images showcasing the MVC flow)
 ```
 
 ---
