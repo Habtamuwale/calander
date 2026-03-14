@@ -4,6 +4,14 @@ A state-of-the-art, cross-platform event scheduling application built with **Flu
 
 ---
 
+## 📸 Visual Showcase
+
+| Login Screen | Home Calendar | Event Creation |
+| :---: | :---: | :---: |
+| ![Login](./screenshots/login.png) | ![Calendar](./screenshots/viewscreen.png) | ![Form](./screenshots/Scheduled_form_screen.png) |
+
+---
+
 ## ✨ Features
 
 ### 📅 Calendar & Events
@@ -30,24 +38,98 @@ A state-of-the-art, cross-platform event scheduling application built with **Flu
 ## 🏗️ Project Structure
 
 ```text
-/home/habtamu/schedule/
-├── 📂 backend/                   # Node.js + Express Server
-│   ├── 📂 routes/               # API Endpoints (Auth, Events)
-│   ├── 📂 services/             # Logic (Email, OTP, Firebase Admin)
-│   ├── 📂 models/               # Data Structures
-│   ├── 📄 server.js             # Entry Point & Middlewares
-│   └── 📄 .env                  # Environment Variables (Secrets)
-│
-├── 📂 frontend_flutter/          # Flutter Cross-Platform App
-│   ├── 📂 lib/
-│   │   ├── 📂 screens/          # App Views (Login, Home, OTP, etc.)
-│   │   ├── 📂 widgets/          # Reusable UI Components
-│   │   ├── 📂 services/         # API & Backend Communication
-│   │   ├── 📂 models/           # Frontend Data Models
-│   │   └── 📄 main.dart         # Flutter Entry Point
-│   └── 📄 pubspec.yaml          # Flutter Dependencies
-│
-└── 📄 README.md                 # Project Documentation
+.
+├── backend
+│   ├── controllers
+│   │   └── eventController.js
+│   ├── models
+│   │   └── Event.js
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── routes
+│   │   ├── authRoutes.js
+│   │   └── eventRoutes.js
+│   ├── server.js
+│   ├── serviceAccountKey.json
+│   └── services
+│       ├── authService.js
+│       ├── emailService.js
+│       ├── firebase.js
+│       ├── otpService.js
+│       └── scheduler.js
+├── frontend_flutter
+│   ├── analysis_options.yaml
+│   ├── android
+│   │   ├── app
+│   │   ├── build.gradle.kts
+│   │   ├── frontend_flutter_android.iml
+│   │   ├── gradle
+│   │   ├── gradle.properties
+│   │   ├── gradlew
+│   │   ├── gradlew.bat
+│   │   ├── local.properties
+│   │   └── settings.gradle.kts
+│   ├── assets
+│   │   └── sounds
+│   ├── firebase.json
+│   ├── frontend_flutter.iml
+│   ├── ios
+│   │   ├── Flutter
+│   │   ├── Runner
+│   │   ├── RunnerTests
+│   │   ├── Runner.xcodeproj
+│   │   └── Runner.xcworkspace
+│   ├── lib
+│   │   ├── firebase_options.dart
+│   │   ├── main.dart
+│   │   ├── models
+│   │   ├── screens
+│   │   ├── services
+│   │   └── widgets
+│   ├── linux
+│   │   ├── CMakeLists.txt
+│   │   ├── flutter
+│   │   └── runner
+│   ├── macos
+│   │   ├── Flutter
+│   │   ├── Runner
+│   │   ├── RunnerTests
+│   │   ├── Runner.xcodeproj
+│   │   └── Runner.xcworkspace
+│   ├── pubspec.lock
+│   ├── pubspec.yaml
+│   ├── README.md
+│   ├── test
+│   │   └── widget_test.dart
+│   ├── web
+│   │   ├── favicon.png
+│   │   ├── icons
+│   │   ├── index.html
+│   │   └── manifest.json
+│   └── windows
+│       ├── CMakeLists.txt
+│       ├── flutter
+│       └── runner
+├── README.md
+└── screenshots
+    ├── date_form.png
+    ├── edite_profile_1.png
+    ├── edit_profile_2.png
+    ├── enter_new_password.png
+    ├── forget_email_screen.png
+    ├── login page.png
+    ├── login.png
+    ├── OTP_screen.png
+    ├── scheduled_day_indicater.png
+    ├── schedule_details.png
+    ├── Scheduled_form_screen.png
+    ├── Screenshot from 2026-03-14 09-48-50.png
+    ├── select_daily_month_year.png
+    ├── sheduled_edit_form.png
+    ├── signup.png
+    ├── Time_form.png
+    ├── upcoming_scheduled.png
+    └── viewscreen.png
 ```
 
 ---
@@ -66,16 +148,16 @@ npm install
 ```
 
 **Configuration:**
-- Create a `.env` file in the `backend/` directory:
-  ```env
-  PORT=5000
-  EMAIL_USER=your-email@gmail.com
-  EMAIL_PASS=your-gmail-app-password
-  ```
-- Download your **Service Account Key** (JSON) from Firebase Console:
-  1. Project Settings > Service Accounts.
-  2. Click **Generate New Private Key**.
-  3. Rename it to `serviceAccountKey.json` and place it in the `backend/` folder.
+1. Create a `.env` file in the `backend/` directory:
+   ```env
+   PORT=5000
+   EMAIL_USER=your-email@gmail.com
+   EMAIL_PASS=your-gmail-app-password
+   ```
+2. Download your **Service Account Key** (JSON) from Firebase Console:
+   - Project Settings > Service Accounts.
+   - Click **Generate New Private Key**.
+   - Rename it to `serviceAccountKey.json` and place it in the `backend/` folder.
 
 **Run Backend:**
 ```bash
